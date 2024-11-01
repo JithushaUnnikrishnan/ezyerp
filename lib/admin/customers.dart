@@ -47,6 +47,151 @@ class _CustomersState extends State<Customers> {
     });
   }
 
+//   void showCallDialog(BuildContext context, Map<String, dynamic> customer) {
+//   final whatsapp = customer["whatsappno"];
+//   int number = int.parse(whatsapp);
+  
+//   showDialog(
+//     context: context,
+//     builder: (BuildContext context) {
+//       return AlertDialog(
+//         title: Text("Choose number"),
+//         content: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             // Display the WhatsApp number
+//             // Text("$number",
+//             //   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+//             // ),
+//             SizedBox(height: 8),
+//             InkWell(
+//               onTap: () async {
+                
+//                 await launch("https://wa.me/$number?text=Hello");
+//               },
+//               child: Row(
+               
+//                 children: [
+//                   Icon(
+//                     CupertinoIcons.phone_circle,
+//                     size: 20,
+//                     color: Colors.black,
+//                   ),
+//                   SizedBox(width: 8),
+//                   Text("$number"),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       );
+//     },
+//   );
+// }
+
+void showCallDialog(BuildContext context, Map<String, dynamic> customer) {
+  final whatsapp = customer["whatsappno"];
+  
+  
+  List<String> numbers = (whatsapp != null && whatsapp.isNotEmpty) 
+      ? whatsapp.split('/') // Split by '/' or adjust to your delimiter
+      : [];
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Choose number"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (numbers.isEmpty)
+              Text(
+                "No WhatsApp number",
+                style: TextStyle(fontSize: 16, ),
+              )
+            else
+              // Display each number in a separate row
+              ...numbers.map((number) {
+                return InkWell(
+                  onTap: () async {
+                    await launch("https://wa.me/${number.trim()}?text=Hello");
+                  },
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.phone_circle,
+                        size: 20,
+                        color: Colors.black,
+                      ),
+                      SizedBox(width: 8),
+                      Text(number.trim()), // Trim any extra spaces
+                    ],
+                  ),
+                );
+              }).toList(),
+          ],
+        ),
+       
+      );
+    },
+  );
+}
+void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
+  final phoneNumbers = customer["mobileno"];
+  
+  // Split the phone numbers by '/' or another delimiter if multiple numbers are present
+  List<String> numbers = (phoneNumbers != null && phoneNumbers.isNotEmpty) 
+      ? phoneNumbers.split('/') 
+      : [];
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Choose number"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (numbers.isEmpty)
+              Text(
+                "No phone number available",
+                style: TextStyle(fontSize: 16,),
+              )
+            else
+              // Display each number in a separate row
+              ...numbers.map((number) {
+                return InkWell(
+                  onTap: () async {
+                    final Uri url = Uri.parse('tel:${number.trim()}');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    } else {
+                      throw 'Could not launch $url';
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.phone_outlined,
+                        size: 20,
+                        color: Colors.black,
+                      ),
+                      SizedBox(width: 8),
+                      Text(number.trim()), // Trim any extra spaces
+                    ],
+                  ),
+                );
+              }).toList(),
+          ],
+        ),
+       
+      );
+    },
+  );
+}
+
+
   @override
   void dispose() {
     searchController.dispose();
@@ -188,17 +333,20 @@ class _CustomersState extends State<Customers> {
                                 title: Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
+                                    // Get the phone numbers and split them by '/' if multiple numbers are present
+
                                     InkWell(
                                       onTap: () async {
-                                        final phoneNumber =
-                                            customer["mobileno"];
-                                        final Uri url =
-                                            Uri.parse('tel:$phoneNumber');
-                                        if (await canLaunchUrl(url)) {
-                                          await launchUrl(url);
-                                        } else {
-                                          throw 'Could not launch $url';
-                                        }
+                                        showPhoneDialog(context, customer);
+                                        // final phoneNumber =
+                                        //     customer["mobileno"];
+                                        // final Uri url =
+                                        //     Uri.parse('tel:$phoneNumber');
+                                        // if (await canLaunchUrl(url)) {
+                                        //   await launchUrl(url);
+                                        // } else {
+                                        //   throw 'Could not launch $url';
+                                        // }
                                       },
                                       child: Icon(
                                         Icons.phone_outlined,
@@ -208,58 +356,9 @@ class _CustomersState extends State<Customers> {
                                     ),
                                     SizedBox(width: screenWidth * 0.01),
                                     InkWell(
-                                      onTap: () async {
-                                        final whatsapp = customer["whatsappno"];
+                                      onTap: () {
 
-                                        if (whatsapp != null &&
-                                            whatsapp.isNotEmpty) {
-                                          // Remove all non-numeric characters to ensure proper format
-                                          final cleanedNumber = whatsapp
-                                              .replaceAll(RegExp(r'\D'), '');
-
-                                          // Check that the number includes the country code (without any '+')
-                                          if (cleanedNumber.length < 10) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(SnackBar(
-                                                    content: Text(
-                                                        "Invalid WhatsApp number format.")));
-                                            return;
-                                          }
-
-                                          // Build the WhatsApp URL
-                                          final Uri url = Uri.parse(
-                                              'https://wa.me/$cleanedNumber');
-                                          print(
-                                              "Attempting to launch WhatsApp URL: $url");
-
-                                          // Attempt to launch the URL
-                                          try {
-                                            if (await canLaunchUrl(url)) {
-                                              await launchUrl(url,
-                                                  mode: LaunchMode
-                                                      .externalApplication);
-                                            } else {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(SnackBar(
-                                                      content: Text(
-                                                          "Failed to open WhatsApp.")));
-                                            }
-                                          } catch (e) {
-                                            // Handle any exceptions
-                                            print(
-                                                "Error launching WhatsApp: $e");
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(SnackBar(
-                                                    content: Text(
-                                                        "Error launching WhatsApp.")));
-                                          }
-                                        } else {
-                                          // Show SnackBar if WhatsApp number is not available or is empty
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(SnackBar(
-                                                  content: Text(
-                                                      "WhatsApp number not available.")));
-                                        }
+                                        showCallDialog(context, customer);
                                       },
                                       child: Icon(
                                         CupertinoIcons.phone_circle,
@@ -267,7 +366,6 @@ class _CustomersState extends State<Customers> {
                                         color: Colors.black,
                                       ),
                                     ),
-                                    // Space between icons
                                   ],
                                 ),
                                 contentPadding:
@@ -315,7 +413,9 @@ class _CustomersState extends State<Customers> {
                                                 context,
                                                 MaterialPageRoute(
                                                     builder: (context) =>
-                                                        StatementsLists()));
+                                                        StatementsLists(customerName: customer["customer_name"],
+                                                        place: customer["area_name"],
+                                                        )));
 
                                             break;
                                         }

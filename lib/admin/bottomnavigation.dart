@@ -1,4 +1,5 @@
 import 'package:bill/admin/home.dart';
+import 'package:bill/admin/more.dart';
 import 'package:bill/admin/receipt_view.dart';
 import 'package:flutter/material.dart';
 import 'customers.dart';
@@ -26,7 +27,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
     Home(), // Home screen (import from admin/home.dart)
     Customers(), // Customers screen
     ViewReceipt(), // Placeholder for Receipts screen
-    Center(child: Text("More")), // Placeholder for More screen
+   More(), // Placeholder for More screen
   ];
 
   // Method to update the current index on tab tap

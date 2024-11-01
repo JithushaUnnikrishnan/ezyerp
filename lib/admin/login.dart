@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:bill/admin/counter.dart';
+import 'package:bill/models/loginmodel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 import 'package:bill/common/api_connect.dart';
@@ -7,6 +8,7 @@ import 'package:bill/custom/button.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:http/http.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../custom/textformfeild.dart';
 import 'bottomnavigation.dart';
@@ -32,28 +34,32 @@ class _LoginState extends State<Login> {
   //         content: Text("Invalid Username or Password or Officecode")));
   //   }
   // }
-
+  bool _islogging = false;
   final formkey = GlobalKey<FormState>();
   var username = TextEditingController();
   var password = TextEditingController();
   var officecode = TextEditingController();
 
+  checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('_isLogging', true);
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-        double textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    double textScaleFactor = MediaQuery.of(context).textScaleFactor;
 
     return Form(
       key: formkey,
       child: Scaffold(
-        backgroundColor:Color(0xfffffbff),
+        backgroundColor: Color(0xfffffbff),
         body: Container(
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
                 SizedBox(
                   height: screenHeight * .04,
                 ),
@@ -61,10 +67,12 @@ class _LoginState extends State<Login> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                      
-                      height: screenHeight*0.03,
-                      width: screenWidth*0.3,
-                      decoration: BoxDecoration( image: DecorationImage(image: AssetImage('assets/erp.png'))),),
+                      height: screenHeight * 0.03,
+                      width: screenWidth * 0.3,
+                      decoration: BoxDecoration(
+                          image: DecorationImage(
+                              image: AssetImage('assets/erp.png'))),
+                    ),
                   ],
                 ),
                 SizedBox(
@@ -74,14 +82,14 @@ class _LoginState extends State<Login> {
                   padding: const EdgeInsets.all(35.0),
                   child: Container(
                     //  height: screenHeight * 0.5,
-                   width: Responsive.isSmallScreen(context)
-                      ? screenWidth *.90
+                    width: Responsive.isSmallScreen(context)
+                        ? screenWidth * .90
                         : Responsive.isMediumScreen(context)
-                        ? screenWidth * 0.45 // Tablet
-                        : screenWidth * 0.2,
+                            ? screenWidth * 0.45 // Tablet
+                            : screenWidth * 0.2,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                     boxShadow: [
+                      boxShadow: [
                         BoxShadow(
                             offset: Offset(1, 9),
                             color: Colors.grey.shade300,
@@ -109,10 +117,9 @@ class _LoginState extends State<Login> {
                             height: screenHeight * .015,
                           ),
                           CustomTextformfield(
-                            controller: officecode,
-                            hintText: "Office code",
-                            PrefixIcon:Icons.compare_arrows_rounded
-                          ),
+                              controller: officecode,
+                              hintText: "Office code",
+                              PrefixIcon: Icons.compare_arrows_rounded),
                           SizedBox(
                             height: screenHeight * .015,
                           ),
@@ -161,7 +168,8 @@ class _LoginState extends State<Login> {
                               text: "LOGIN",
                               TextColor: Colors.white,
                             ),
-                          ),SizedBox(
+                          ),
+                          SizedBox(
                             height: Responsive.isSmallScreen(context)
                                 ? screenHeight * 0.03
                                 : Responsive.isMediumScreen(context)
@@ -182,7 +190,9 @@ class _LoginState extends State<Login> {
                 ),
                 Text(
                   "Powered By",
-                  style: TextStyle(fontSize: textScaleFactor * 10,),
+                  style: TextStyle(
+                    fontSize: textScaleFactor * 10,
+                  ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -252,39 +262,118 @@ class _LoginState extends State<Login> {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json',
     };
+
     try {
-      //var response = await postJson("/login.php", data);
       var responses = await http.post(
-          Uri.parse("http://app.ezyerp.live/login.php"),
-          headers: headercommon,
-          body: Uri(queryParameters: data).query);
+        Uri.parse("http://app.ezyerp.live/login.php"),
+        headers: headercommon,
+        body: Uri(queryParameters: data).query,
+      );
+
       print(responses.body);
+      print(responses.statusCode);
 
       if (responses.statusCode == 200) {
-      // Decode the JSON response
-      var jsonResponse = json.decode(responses.body);
-      
-      // Check if the login was successful based on the 'flag'
-      if (jsonResponse['flag'] == true) {
-        print('Login successful');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Counter()),
-        );
+        var jsonResponse = json.decode(responses.body);
+        LoginResponse loginResponse = LoginResponse.fromJson(jsonResponse);
+print("Employee Object: ${loginResponse.employee}");
+        if (loginResponse.flag) {
+          print('Login successful');
+
+          // Get office name from the employee object
+          String officeName = loginResponse.employee.officename;
+          String location = loginResponse.employee.location;
+          String Adminname = loginResponse.employee.employeeName;
+          // print('Office Name: $officeName');
+          // Save office name in shared preferences
+          print(Adminname);
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('officeName', officeName);
+          await prefs.setString('Adminname', Adminname);
+
+          await prefs.setString('location', location);
+         
+         
+          print("Office Name:$officeName");
+          print("location:$location");
+          print("adminName:$Adminname");
+
+          // Navigate to the next screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Counter()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(loginResponse.msg),
+          ));
+          print('Login failed: ${loginResponse.msg}');
+        }
       } else {
-        // Handle the unsuccessful login case
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(jsonResponse['msg'] ?? "Login failed"),
+          content: Text("Invalid Username or Password or Officecode"),
         ));
-        print('Login failed: ${jsonResponse['msg']}');
+        print('Login failed with status code: ${responses.statusCode}');
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Invalid Username or Password or Officecode"),
-      ));
-      print('Login failed with status code: ${responses.statusCode}');
+    } catch (e) {
+      print('An error occurred: $e');
     }
-  } catch (e) {
-    print('An error occurred: $e');
-  }}
+  }
+  // Future<void> Loginn({
+  //   required String username,
+  //   required String password,
+  //   required String officecode,
+  // }) async {
+  //   Map<String, dynamic> data = {
+  //     "username": username,
+  //     "password": password,
+  //     "officecode": officecode,
+  //   };
+  //   const headercommon = {
+  //     'Content-Type': 'application/x-www-form-urlencoded',
+  //     'Accept': 'application/json',
+  //   };
+  //   try {
+  //     //var response = await postJson("/login.php", data);
+  //     var responses = await http.post(
+  //         Uri.parse("http://app.ezyerp.live/login.php"),
+  //         headers: headercommon,
+  //         body: Uri(queryParameters: data).query);
+  //     print(responses.body);
+  //     print(responses.statusCode);
+  //     if (responses.statusCode == 200) {
+  //       // Decode the JSON response
+
+  //       var jsonResponse = json.decode(responses.body);
+
+  //       // Check if the login was successful based on the 'flag'
+  //       if (jsonResponse['flag'] == true) {
+  //         print('Login successful');
+  //          String officeName = jsonResponse['employee']['officename'] ?? 'Unknown Office';
+  //       SharedPreferences prefs = await SharedPreferences.getInstance();
+  //       await prefs.setString('officeName', officeName);
+  //       print("nihallll$officeName");
+
+  //         // checkLoginStatus();
+  //         Navigator.pushReplacement(
+  //           context,
+  //           MaterialPageRoute(builder: (context) => Counter()),
+  //         );
+  //       } else {
+  //         // Handle the unsuccessful login case
+  //         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //           content: Text(jsonResponse['msg'] ?? "Login failed"),
+  //         ));
+  //         print('Login failed: ${jsonResponse['msg']}');
+  //       }
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //         content: Text("Invalid Username or Password or Officecode"),
+  //       ));
+  //       print('Login failed with status code: ${responses.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('An error occurred: $e');
+  //   }
+  // }
 }

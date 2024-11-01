@@ -1,210 +1,166 @@
-class LoginModel {
-  bool? flag;
-  String? msg;
-  Employee? employee;
+// login_response.dart
+class LoginResponse {
+  final bool flag;
+  final String msg;
+  final Employee employee;
 
-  LoginModel({this.flag, this.msg, this.employee});
+  LoginResponse({
+    required this.flag,
+    required this.msg,
+    required this.employee,
+  });
 
-  LoginModel.fromJson(Map<String, dynamic> json) {
-    flag = json['flag'];
-    msg = json['msg'];
-    employee = json['employee'] != null
-        ? new Employee.fromJson(json['employee'])
-        : null;
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['flag'] = this.flag;
-    data['msg'] = this.msg;
-    if (this.employee != null) {
-      data['employee'] = this.employee!.toJson();
-    }
-    return data;
+  factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    return LoginResponse(
+      flag: json['flag'],
+      msg: json['msg'],
+      employee: Employee.fromJson(json['employee']),
+    );
   }
 }
 
 class Employee {
-  String? userid;
-  String? employeeid;
-  String? status;
-  String? employeeName;
-  String? address;
-  String? dob;
-  String? gender;
-  String? mobileno;
-  String? whatsappno;
-  String? emailid;
-  String? joinDate;
-  Null? photo;
-  String? usertypeid;
-  String? employeeStatus;
-  String? officeid;
-  String? gstno;
-  String? officename;
-  String? officeAddress;
-  String? pincode;
-  String? stateName;
-  String? stateCode;
-  String? tinNo;
-  String? countryName;
-  String? countryCode;
-  String? location;
-  String? officeMobileno;
-  String? officeEmailid;
-  Null? website;
-  Null? logo;
-  String? officetypeid;
-  String? officetype;
-  String? usertype;
-  String? username;
-  String? countryId;
-  String? stateId;
-  Null? fssai;
-  String? offStatus;
-  String? financialyearid;
-  String? financialyear;
-  String? fystartdate;
-  String? fyeenddate;
-  String? fystatus;
-  String? imageUrl;
+  final String userid;
+  final String employeeid;
+  final String username;
+  final String employeeName;
+  final String address;
+  final String mobileno;
+  final String whatsappno;
+  final String emailid;
+  final String joinDate;
+  final String dob;
+  final String gender;
+  final String employeeStatus;
+  final String usertype;
+  final String usertypeid;
+  final String officeid;
+  final String taxEst;
+  final String accounttype;
+  final String gstno;
+  final String officename;
+  final String officeAddress;
+  final String pincode;
+  final String location;
+  final String stateId;
+  final String stateName;
+  final String stateCode;
+  final String tinNo;
+  final String countryId;
+  final String countryName;
+  final String countryCode;
+  final String? fssai; // Nullable field
+  final String officeEmailId;
+  final String officeMobileNo;
+  final String? website; // Nullable field
+  final String? logo; // Nullable field
+  final String officetypeid;
+  final String officetype;
+  final String offStatus;
+  final String billType;
+  final String officeBill;
+  final String financialYearId;
+  final String financialYear;
+  final String fyStartDate;
+  final String fyEndDate;
+  final String fyStatus;
+  final String imageUrl;
 
-  Employee(
-      {this.userid,
-        this.employeeid,
-        this.status,
-        this.employeeName,
-        this.address,
-        this.dob,
-        this.gender,
-        this.mobileno,
-        this.whatsappno,
-        this.emailid,
-        this.joinDate,
-        this.photo,
-        this.usertypeid,
-        this.employeeStatus,
-        this.officeid,
-        this.gstno,
-        this.officename,
-        this.officeAddress,
-        this.pincode,
-        this.stateName,
-        this.stateCode,
-        this.tinNo,
-        this.countryName,
-        this.countryCode,
-        this.location,
-        this.officeMobileno,
-        this.officeEmailid,
-        this.website,
-        this.logo,
-        this.officetypeid,
-        this.officetype,
-        this.usertype,
-        this.username,
-        this.countryId,
-        this.stateId,
-        this.fssai,
-        this.offStatus,
-        this.financialyearid,
-        this.financialyear,
-        this.fystartdate,
-        this.fyeenddate,
-        this.fystatus,
-        this.imageUrl});
+  Employee({
+    required this.userid,
+    required this.employeeid,
+    required this.username,
+    required this.employeeName,
+    required this.address,
+    required this.mobileno,
+    required this.whatsappno,
+    required this.emailid,
+    required this.joinDate,
+    required this.dob,
+    required this.gender,
+    required this.employeeStatus,
+    required this.usertype,
+    required this.usertypeid,
+    required this.officeid,
+    required this.taxEst,
+    required this.accounttype,
+    required this.gstno,
+    required this.officename,
+    required this.officeAddress,
+    required this.pincode,
+    required this.location,
+    required this.stateId,
+    required this.stateName,
+    required this.stateCode,
+    required this.tinNo,
+    required this.countryId,
+    required this.countryName,
+    required this.countryCode,
+    this.fssai,
+    required this.officeEmailId,
+    required this.officeMobileNo,
+    this.website,
+    this.logo,
+    required this.officetypeid,
+    required this.officetype,
+    required this.offStatus,
+    required this.billType,
+    required this.officeBill,
+    required this.financialYearId,
+    required this.financialYear,
+    required this.fyStartDate,
+    required this.fyEndDate,
+    required this.fyStatus,
+    required this.imageUrl,
+  });
 
-  Employee.fromJson(Map<String, dynamic> json) {
-    userid = json['userid'];
-    employeeid = json['employeeid'];
-    status = json['status'];
-    employeeName = json['employee_name'];
-    address = json['address'];
-    dob = json['dob'];
-    gender = json['gender'];
-    mobileno = json['mobileno'];
-    whatsappno = json['whatsappno'];
-    emailid = json['emailid'];
-    joinDate = json['join_date'];
-    photo = json['photo'];
-    usertypeid = json['usertypeid'];
-    employeeStatus = json['employee_status'];
-    officeid = json['officeid'];
-    gstno = json['gstno'];
-    officename = json['officename'];
-    officeAddress = json['office_address'];
-    pincode = json['pincode'];
-    stateName = json['state_name'];
-    stateCode = json['state_code'];
-    tinNo = json['tin_no'];
-    countryName = json['country_name'];
-    countryCode = json['country_code'];
-    location = json['location'];
-    officeMobileno = json['office_mobileno'];
-    officeEmailid = json['office_emailid'];
-    website = json['website'];
-    logo = json['logo'];
-    officetypeid = json['officetypeid'];
-    officetype = json['officetype'];
-    usertype = json['usertype'];
-    username = json['username'];
-    countryId = json['country_id'];
-    stateId = json['state_id'];
-    fssai = json['fssai'];
-    offStatus = json['off_status'];
-    financialyearid = json['financialyearid'];
-    financialyear = json['financialyear'];
-    fystartdate = json['fystartdate'];
-    fyeenddate = json['fyeenddate'];
-    fystatus = json['fystatus'];
-    imageUrl = json['image_url'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['userid'] = this.userid;
-    data['employeeid'] = this.employeeid;
-    data['status'] = this.status;
-    data['employee_name'] = this.employeeName;
-    data['address'] = this.address;
-    data['dob'] = this.dob;
-    data['gender'] = this.gender;
-    data['mobileno'] = this.mobileno;
-    data['whatsappno'] = this.whatsappno;
-    data['emailid'] = this.emailid;
-    data['join_date'] = this.joinDate;
-    data['photo'] = this.photo;
-    data['usertypeid'] = this.usertypeid;
-    data['employee_status'] = this.employeeStatus;
-    data['officeid'] = this.officeid;
-    data['gstno'] = this.gstno;
-    data['officename'] = this.officename;
-    data['office_address'] = this.officeAddress;
-    data['pincode'] = this.pincode;
-    data['state_name'] = this.stateName;
-    data['state_code'] = this.stateCode;
-    data['tin_no'] = this.tinNo;
-    data['country_name'] = this.countryName;
-    data['country_code'] = this.countryCode;
-    data['location'] = this.location;
-    data['office_mobileno'] = this.officeMobileno;
-    data['office_emailid'] = this.officeEmailid;
-    data['website'] = this.website;
-    data['logo'] = this.logo;
-    data['officetypeid'] = this.officetypeid;
-    data['officetype'] = this.officetype;
-    data['usertype'] = this.usertype;
-    data['username'] = this.username;
-    data['country_id'] = this.countryId;
-    data['state_id'] = this.stateId;
-    data['fssai'] = this.fssai;
-    data['off_status'] = this.offStatus;
-    data['financialyearid'] = this.financialyearid;
-    data['financialyear'] = this.financialyear;
-    data['fystartdate'] = this.fystartdate;
-    data['fyeenddate'] = this.fyeenddate;
-    data['fystatus'] = this.fystatus;
-    data['image_url'] = this.imageUrl;
-    return data;
+  factory Employee.fromJson(Map<String, dynamic> json) {
+    return Employee(
+      userid: json['userid'],
+      employeeid: json['employeeid'],
+      username: json['username'],
+      employeeName: json['employee_name'],
+      address: json['address'] ?? '', // Default to empty string if null
+      mobileno: json['mobileno'],
+      whatsappno: json['whatsappno'] ?? '',
+      emailid: json['emailid'] ?? '',
+      joinDate: json['join_date'],
+      dob: json['dob'],
+      gender: json['gender'],
+      employeeStatus: json['employee_status'],
+      usertype: json['usertype'],
+      usertypeid: json['usertypeid'],
+      officeid: json['officeid'],
+      taxEst: json['tax_est'],
+      accounttype: json['accounttype'] ?? '',
+      gstno: json['gstno'],
+      officename: json['officename'],
+      officeAddress: json['office_address'],
+      pincode: json['pincode'],
+      location: json['location'],
+      stateId: json['state_id'],
+      stateName: json['state_name'],
+      stateCode: json['state_code'],
+      tinNo: json['tin_no'],
+      countryId: json['country_id'],
+      countryName: json['country_name'],
+      countryCode: json['country_code'],
+      fssai: json['fssai'], // Nullable field
+      officeEmailId: json['office_emailid'],
+      officeMobileNo: json['office_mobileno'],
+      website: json['website'], // Nullable field
+      logo: json['logo'], // Nullable field
+      officetypeid: json['officetypeid'],
+      officetype: json['officetype'],
+      offStatus: json['off_status'],
+      billType: json['bill_type'],
+      officeBill: json['OfficeBill'],
+      financialYearId: json['financialyearid'],
+      financialYear: json['financialyear'],
+      fyStartDate: json['fystartdate'],
+      fyEndDate: json['fyeenddate'],
+      fyStatus: json['fystatus'],
+      imageUrl: json['image_url'],
+    );
   }
 }
