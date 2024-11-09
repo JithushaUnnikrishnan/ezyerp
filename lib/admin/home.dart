@@ -3,8 +3,10 @@ import 'package:bill/service/dashboardService.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bill/responsive.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:location/location.dart' as loc; // Prefix for location package
+import 'package:geocoding/geocoding.dart' as geo; // Prefix for geocoding package
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -16,16 +18,72 @@ class _HomeState extends State<Home> {
   List<Map<String, dynamic>> Userdashboardd = [];
   late Future<List<Map<String, dynamic>>> futureDashboardData;
   String? officeName;
-  String? location;
+  String? locations;
   String? adminname;
+  String subLocality = '';
+String locality = '';
+String administrativeArea = '';
+  //  DateTimeRange? selectedDateRange;
+    DateTimeRange selectedDateRange = DateTimeRange(
+      
+    start: DateTime(DateTime.now().year, DateTime.now().month, 1,),
+    end: DateTime.now(),
+  );
+     loc.Location location = loc.Location();
+  String currentLocation = "...";
+ // String currentLocation = "Fetching location...";
+   
+ Future<void> _getLocation() async {
+    bool serviceEnabled;
+    loc.PermissionStatus permissionGranted;
+    loc.LocationData locationData;
+
+    // Check if location service is enabled
+    serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) return;
+    }
+
+    // Check for permissions
+    permissionGranted = await location.hasPermission();
+    if (permissionGranted == loc.PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+      if (permissionGranted != loc.PermissionStatus.granted) return;
+    }
+
+    // Get the current location
+    locationData = await location.getLocation();
+
+    // Convert latitude and longitude to a readable address
+    try {
+      List<geo.Placemark> placemarks = await geo.placemarkFromCoordinates(
+        locationData.latitude!,
+        locationData.longitude!,
+      );
+      geo.Placemark place = placemarks[0];
+
+      setState(() {
+        
+        currentLocation = " ${place.locality}, ${place.administrativeArea}";
+         subLocality = place.subLocality ?? 'Unknown SubLocality';
+      });
+    } catch (e) {
+      setState(() {
+        currentLocation = "Unable to get location name";
+        subLocality="";
+      });
+    }
+  }
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    futureDashboardData = FetchDashboard();
+    futureDashboardData = fetchDashboard();
     print("FUTUREDASHBOARD DATA IS $futureDashboardData");
     getOfficeName();
+     _getLocation();
   }
 
   Future<void> getOfficeName() async {
@@ -34,7 +92,7 @@ class _HomeState extends State<Home> {
     prefs.getString("location") ?? 'Default Location';
     prefs.getString('Adminname') ?? 'Default admin Name';
     adminname=prefs.getString('Adminname') ?? 'Default admin Name';
-    location = prefs.getString("location") ?? 'Default Location';
+    locations = (prefs.getString("location") ?? 'Default Location');
     officeName = prefs.getString('officeName') ?? 'Default Office Name';
 
 
@@ -42,18 +100,40 @@ class _HomeState extends State<Home> {
 // Default value if not found
   }
 
-  Future<List<Map<String, dynamic>>> FetchDashboard() async {
-    // Fetch customer data and update the state
-    List<Map<String, dynamic>> data = await Dashboardapi(); // Add await here
-    print("data is $data");
-    return data;
-    // setState(() {
-    //   Userdashboardd = data;
+  // Future<List<Map<String, dynamic>>> FetchDashboard() async {
+  //   // Fetch customer data and update the state
+  //   List<Map<String, dynamic>> data = await Dashboardapi(); // Add await here
+  //   print("data is $data");
+  //   return data;
+  //   // setState(() {
+  //   //   Userdashboardd = data;
 
-    //   print("data iss $Userdashboardd");
-    // });
+  //   //   print("data iss $Userdashboardd");
+  //   // });
+  // }
+ Future<List<Map<String, dynamic>>> fetchDashboard() async {
+    return await Dashboardapi(
+      
+      sdate: selectedDateRange.start,
+      edate: selectedDateRange.end,
+    );
   }
 
+  Future<void> _pickDateRange() async {
+    DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+      initialDateRange: selectedDateRange,
+    );
+
+    if (picked != null) {
+      setState(() {
+        selectedDateRange = picked;
+        futureDashboardData = fetchDashboard();
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final List<Color> colors = [Colors.indigo];
@@ -98,28 +178,26 @@ class _HomeState extends State<Home> {
             SizedBox(
               width: screenWidth * 0.02,
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Panniyankara",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize:
-                          textScaleFactor * 13), // Adjust based on text scale
-                ),
-                Text(
-                  "Kozhikode, Kerala",
-                  style: TextStyle(
-                      color: Colors.white, fontSize: textScaleFactor * 13),
-                )
-              ],
-            )
+           Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+             Text(subLocality, style: TextStyle(
+                    color: Colors.white,
+                    fontSize: textScaleFactor * 13),),
+              Text(
+                currentLocation,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: textScaleFactor * 13),
+              ),
+              
+            ],
+          ),
           ],
         ),
       ),
       body: FutureBuilder(
-          future: FetchDashboard(),
+          future: futureDashboardData,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               // Show loading indicator while fetching data
@@ -134,6 +212,9 @@ class _HomeState extends State<Home> {
 
             // If data is fetched successfully, display the content
             List<Map<String, dynamic>> userDashboardData = snapshot.data!;
+            final String collectionAmt = userDashboardData[0]["collectionamt"] ?? '0';
+    final String collectionCnt = userDashboardData[0]["collectioncnt"] ?? '0';
+    print("jiyhh$collectionCnt");
 
             return SingleChildScrollView(
               child: Padding(
@@ -203,7 +284,7 @@ class _HomeState extends State<Home> {
                                   ),
                                   FittedBox(
                                     child: Text(
-                                      location.toString().toUpperCase(),
+                                      locations.toString().toUpperCase(),
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: textScaleFactor * 11,
@@ -253,25 +334,25 @@ class _HomeState extends State<Home> {
                         border:
                             Border.all(width: 1.6, color: Color(0xff171457)),
                       ),
-                      child: Row(
+                      child: InkWell(onTap: _pickDateRange ,
+                        child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          IconButton(
-                              onPressed: () {},
-                              icon: Icon(
-                                CupertinoIcons.calendar,
-                                size: 15,
-                                color: Color(0xff783d8f),
-                              )),
+                          
+                             Icon(
+                              CupertinoIcons.calendar,
+                              size: 15,
+                              color: Color(0xff783d8f),
+                            ),
+        
                           Text(
-                            "01/02/2024 -",
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          Text(
-                            " 08/02/2024",
+                           
+                            "${DateFormat('dd/MM/yyyy').format(selectedDateRange.start)} - ${DateFormat('dd/MM/yyyy').format(selectedDateRange.end)}",
+                               
                             style: TextStyle(fontWeight: FontWeight.bold),
-                          )
+                          ),
                         ],
+                                            ),
                       ),
                     ),
                     SizedBox(
@@ -323,7 +404,8 @@ class _HomeState extends State<Home> {
                                     Icon(Icons.currency_rupee,
                                         size: 15, color: Colors.black),
                                     Text(
-                                      userDashboardData[0]["collectionamt"],
+                                      // userDashboardData[0]["collectionamt"],
+                                      collectionAmt,
                                       style: TextStyle(
                                           fontSize: textScaleFactor *
                                               12, // Adjust font size
@@ -339,7 +421,8 @@ class _HomeState extends State<Home> {
                                           fontSize: textScaleFactor * 12),
                                     ),
                                     Text(
-                                      userDashboardData[0]["collectioncnt"],
+                                      // userDashboardData[0]["collectioncnt"],
+                                      collectionCnt,
                                       style: TextStyle(
                                           fontSize: textScaleFactor * 12),
                                     ),

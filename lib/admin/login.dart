@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:bill/admin/counter.dart';
 import 'package:bill/models/loginmodel.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 import 'package:bill/common/api_connect.dart';
@@ -119,7 +120,12 @@ class _LoginState extends State<Login> {
                           CustomTextformfield(
                               controller: officecode,
                               hintText: "Office code",
-                              PrefixIcon: Icons.compare_arrows_rounded),
+                              PrefixIcon: 
+                              // Icons.compare_arrows_rounded
+
+                              // CupertinoIcons.chevron_left_slash_chevron_right
+                              CupertinoIcons.chevron_up_chevron_down
+                              ),
                           SizedBox(
                             height: screenHeight * .015,
                           ),
@@ -183,7 +189,7 @@ class _LoginState extends State<Login> {
                 ),
                 SizedBox(
                   height: Responsive.isSmallScreen(context)
-                      ? screenHeight * 0.19
+                      ? screenHeight * 0.12
                       : Responsive.isMediumScreen(context)
                           ? screenHeight * 0.19
                           : screenHeight * 0.17,

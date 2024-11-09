@@ -3,9 +3,14 @@ import 'package:bill/service/creditaging_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bill/responsive.dart';
+ import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class CreditAging extends StatefulWidget {
-  const CreditAging({super.key});
+  final String customerName;
+  final String id;
+  final String place;
+  CreditAging({super.key, required this. customerName, required this. place, required this. id,  });
 
   @override
   State<CreditAging> createState() => _CreditAgingState();
@@ -19,7 +24,54 @@ class _CreditAgingState extends State<CreditAging> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    fetchCreditAgingData();
     fetchcredit();
+  }
+
+
+ 
+
+
+
+
+  Future<List<Map<String, dynamic>>>fetchCreditAgingData() async {
+    final Map<String, dynamic> data = {
+      "officecode": 'RD01',
+      "officeid": "1",
+      "customerid": widget.id,
+      "financialyearid": '1',
+      "noofdays":'',
+      "condition":''
+    };
+print("data is $data");
+ const headercommon = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Accept': 'application/json',
+  };
+    try {
+      var response = await http.post(
+      Uri.parse("http://app.ezyerp.live/creditagingreport.php"),
+      headers: headercommon,
+      body: Uri(queryParameters: data).query,
+    );
+      // print("response of credit aging $response");
+      print('response creditt ${response.body}');
+
+      if (response.statusCode == 200) {
+      var jsonResponse = json.decode(response.body);
+      if (jsonResponse['flag'] == true) {
+        print("response credit ${response.body}");
+        return List<Map<String, dynamic>>.from(jsonResponse['creditage']);
+      } else {
+        print('Request failed with status: ${response.statusCode}');
+      }
+    }
+  } catch (e) {
+    print('Error occurred: $e');
+   
+    // throw e;
+  }
+   return [];
   }
  Future<void> fetchcredit() async {
   // Fetch customer data and update the state
@@ -37,6 +89,56 @@ double _calculateTotalBalance() {
     double balamt = double.tryParse(credit["balamt"].toString()) ?? 0.0;
     return sum + balamt;
   });
+}
+
+void _showReloadDialog() {
+    showDialog(
+  context: context,
+  builder: (BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)), // Adjust border radius
+      child: Container(color: Colors.white,
+        width: MediaQuery.of(context).size.width * 2, // Set custom width
+        height: MediaQuery.of(context).size.height * 0.21, // Set custom height
+        padding: EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Message!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Do you want to reload the Report?',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close dialog without reloading
+                  },
+                  child: Text('No', style: TextStyle(color: const Color.fromARGB(255, 243, 37, 198))),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    // Add your reload logic here
+                  },
+                  child: Text('Yes',style: TextStyle(color: const Color.fromARGB(255, 243, 37, 198))),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+);
 }
   @override
   Widget build(BuildContext context) {
@@ -58,7 +160,7 @@ double _calculateTotalBalance() {
               style: TextStyle(
                   color: Colors.white, fontSize: textScaleFactor * 16),
             ),
-            Icon(CupertinoIcons.arrow_2_circlepath, color: Colors.white)
+            Icon(Icons.cloud_sync_outlined, color: Colors.white,size: 40,)
           ],
         ),
         backgroundColor: Colors.indigo,
@@ -85,7 +187,7 @@ double _calculateTotalBalance() {
                 ),
               ],
             ),
-            child:credits.isNotEmpty? Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
@@ -96,7 +198,7 @@ double _calculateTotalBalance() {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Text(
-                       credits[0]["customer_name"].toUpperCase(),
+                       widget.customerName.toUpperCase(),
                         style: TextStyle(
                           fontSize: textScaleFactor * 11,
                           fontWeight: FontWeight.bold,
@@ -106,22 +208,23 @@ double _calculateTotalBalance() {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Text(
-                        credits[0]["address"],
+                       widget.place,
                         style: TextStyle(fontSize: textScaleFactor * 10),
                       ),
                     ),
                   ],
                 ),
-                Icon(CupertinoIcons.arrow_2_circlepath)
+               GestureDetector(
+                  onTap: _showReloadDialog, // Show the reload dialog on tap
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 20.0),
+                    child: Icon(Icons.autorenew_outlined, size: 35, color: Colors.black87),
+                  ),)
               ],
             )
-             : Center(
-          child: Text(
-            'No data available',
-            style: TextStyle(fontSize: textScaleFactor * 12),
-          ),
+             
         
-),
+
           ),
          Expanded(
             child:isLoading?Center(child: CircularProgressIndicator()) :ListView.builder(
@@ -139,92 +242,101 @@ double _calculateTotalBalance() {
                       child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  credit["invoice"],
-                                  style: TextStyle(
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    credit["invoice"],
+                                    style: TextStyle(
+                                        fontSize: textScaleFactor * 11,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    credit["pur_date"],
+                                    style: TextStyle(
                                       fontSize: textScaleFactor * 11,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  credit["pur_date"],
-                                  style: TextStyle(
-                                    fontSize: textScaleFactor * 11,
-                                  ),
-                                ),
-                                Text(
-                                  'No.Of.Days',
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: textScaleFactor * 10,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  "Total:",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: textScaleFactor * 11,
-                                  ),
-                                ),
-                                Text(
-                                  'Balance:',
-                                  style: TextStyle(
-                                    fontSize: textScaleFactor * 11,
-                                  ),
-                                ),
-                                SizedBox(height: screenHeight * .01),
-                                Text('       '),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.currency_rupee,
-                                      size: 10,
                                     ),
-                                    Text(
-                                       credit["totalamt"],
-                                      style: TextStyle(
-                                          fontSize: textScaleFactor * 11,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.currency_rupee,
-                                      size: 10,
-                                      color: Colors.green,
-                                    ),
-                                    Text(
-                                       credit["balamt"],
-                                      style: TextStyle(
-                                          fontSize: textScaleFactor * 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.green),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  credit["noofdays"],
-                                  style: TextStyle(
-                                      fontSize: textScaleFactor * 11,
+                                  ),
+                                  Text(
+                                    'No.Of.Days',
+                                    style: TextStyle(
+                                      color: Colors.red,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.red),
-                                ),
-                              ],
+                                      fontSize: textScaleFactor * 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 50.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    "Total:",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: textScaleFactor * 11,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Balance:',
+                                    style: TextStyle(
+                                      fontSize: textScaleFactor * 11,
+                                    ),
+                                  ),
+                                  SizedBox(height: screenHeight * .01),
+                                  Text('       '),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.currency_rupee,
+                                        size: 10,
+                                      ),
+                                      Text(
+                                         credit["totalamt"],
+                                        style: TextStyle(
+                                            fontSize: textScaleFactor * 11,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.currency_rupee,
+                                        size: 10,
+                                        color: Color(0xff14135f),
+                                      ),
+                                      Text(
+                                         credit["balamt"],
+                                        style: TextStyle(
+                                            fontSize: textScaleFactor * 11,
+                                            fontWeight: FontWeight.bold,
+                                             color: Color(0xff14135f),),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    credit["noofdays"],
+                                    style: TextStyle(
+                                        fontSize: textScaleFactor * 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red),
+                                  ),
+                                ],
+                              ),
                             ),
                           ])),
                 );
@@ -260,8 +372,8 @@ double _calculateTotalBalance() {
         )
          : Center(
           child: Text(
-            'No data available',
-            style: TextStyle(fontSize: textScaleFactor * 12),
+            'Total balance is Empty',
+            style: TextStyle(fontSize: textScaleFactor * 12,color: Colors.red,fontWeight: FontWeight.bold),
           ),
         
 ),

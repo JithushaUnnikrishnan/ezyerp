@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.bill.app-mergeDebugResources-28:/values-v21/values-v21.xml",
+            "outputFile": "com.example.bill.app-mergeDebugResources-30:/values-v21/values-v21.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\Administrator\\.gradle\\caches\\transforms-3\\fac84cd5ecf1ec88a8c98571217c9350\\transformed\\core-1.13.1\\res\\values-v21\\values-v21.xml",
+                    "source": "C:\\Users\\Administrator\\.gradle\\caches\\transforms-3\\51c90c45dda89cde7ab972019d60fcb7\\transformed\\core-1.13.1\\res\\values-v21\\values-v21.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,13",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4",

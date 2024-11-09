@@ -17,7 +17,9 @@ class Customers extends StatefulWidget {
 class _CustomersState extends State<Customers> {
   List<Map<String, dynamic>> customers = [];
   List<Map<String, dynamic>> search = [];
+  String? selectedLocation;
   bool isLoading = true;
+  bool isFiltered = false;
   TextEditingController searchController = TextEditingController();
   @override
   void initState() {
@@ -47,150 +49,222 @@ class _CustomersState extends State<Customers> {
     });
   }
 
-//   void showCallDialog(BuildContext context, Map<String, dynamic> customer) {
-//   final whatsapp = customer["whatsappno"];
-//   int number = int.parse(whatsapp);
-  
-//   showDialog(
-//     context: context,
-//     builder: (BuildContext context) {
-//       return AlertDialog(
-//         title: Text("Choose number"),
-//         content: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             // Display the WhatsApp number
-//             // Text("$number",
-//             //   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-//             // ),
-//             SizedBox(height: 8),
-//             InkWell(
-//               onTap: () async {
-                
-//                 await launch("https://wa.me/$number?text=Hello");
-//               },
-//               child: Row(
-               
-//                 children: [
-//                   Icon(
-//                     CupertinoIcons.phone_circle,
-//                     size: 20,
-//                     color: Colors.black,
-//                   ),
-//                   SizedBox(width: 8),
-//                   Text("$number"),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       );
-//     },
-//   );
-// }
+  void _showLocationFilterDialog() {
+    // Get a unique list of locations
+    List<String> locations = customers
+        .map((customer) => customer["area_name"]?.toString() ?? "")
+        .toSet()
+        .toList();
 
-void showCallDialog(BuildContext context, Map<String, dynamic> customer) {
-  final whatsapp = customer["whatsappno"];
-  
-  
-  List<String> numbers = (whatsapp != null && whatsapp.isNotEmpty) 
-      ? whatsapp.split('/') // Split by '/' or adjust to your delimiter
-      : [];
+    String? selectedLocation;
+    bool showDropdown = false;
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text("Choose number"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (numbers.isEmpty)
-              Text(
-                "No WhatsApp number",
-                style: TextStyle(fontSize: 16, ),
-              )
-            else
-              // Display each number in a separate row
-              ...numbers.map((number) {
-                return InkWell(
-                  onTap: () async {
-                    await launch("https://wa.me/${number.trim()}?text=Hello");
-                  },
-                  child: Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.phone_circle,
-                        size: 20,
-                        color: Colors.black,
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text("Choose Area", style: TextStyle(fontSize: 18)),
+              content: Container(
+                width: 250,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // TextField that acts as a dropdown
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          showDropdown = !showDropdown;
+                        });
+                      },
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              selectedLocation ?? "Select a Area",
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.black54),
+                            ),
+                            Icon(
+                              showDropdown
+                                  ? Icons.arrow_drop_up
+                                  : Icons.arrow_drop_down,
+                              color: Colors.black54,
+                            ),
+                          ],
+                        ),
                       ),
-                      SizedBox(width: 8),
-                      Text(number.trim()), // Trim any extra spaces
-                    ],
-                  ),
-                );
-              }).toList(),
-          ],
-        ),
-       
-      );
-    },
-  );
-}
-void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
-  final phoneNumbers = customer["mobileno"];
-  
-  // Split the phone numbers by '/' or another delimiter if multiple numbers are present
-  List<String> numbers = (phoneNumbers != null && phoneNumbers.isNotEmpty) 
-      ? phoneNumbers.split('/') 
-      : [];
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text("Choose number"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (numbers.isEmpty)
-              Text(
-                "No phone number available",
-                style: TextStyle(fontSize: 16,),
-              )
-            else
-              // Display each number in a separate row
-              ...numbers.map((number) {
-                return InkWell(
-                  onTap: () async {
-                    final Uri url = Uri.parse('tel:${number.trim()}');
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url);
-                    } else {
-                      throw 'Could not launch $url';
+                    ),
+                    // Dropdown list of locations
+                    if (showDropdown)
+                      Container(
+                        height: 250,
+                        child: ListView(
+                          children: locations.map((location) {
+                            return ListTile(
+                              title: Text(
+                                location,
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  selectedLocation = location;
+                                  showDropdown = false;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    if (selectedLocation != null) {
+                      // Perform filtering after closing the dialog
+                      Navigator.of(context).pop(selectedLocation);
                     }
                   },
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.phone_outlined,
-                        size: 20,
-                        color: Colors.black,
-                      ),
-                      SizedBox(width: 8),
-                      Text(number.trim()), // Trim any extra spaces
-                    ],
-                  ),
-                );
-              }).toList(),
-          ],
-        ),
-       
-      );
-    },
-  );
-}
+                  child: Text("OK"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Cancel"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((selectedLocation) {
+      // Filter only if a location was selected
+      if (selectedLocation != null) {
+        setState(() {
+          // Filter the customer list by the selected location
+          search = customers
+              .where((customer) => customer["area_name"] == selectedLocation)
+              .toList();
+          isFiltered = true;
+        });
+      }
+    });
+  }
 
+  void showCallDialog(BuildContext context, Map<String, dynamic> customer) {
+    final whatsapp = customer["whatsappno"];
+
+    List<String> numbers = (whatsapp != null && whatsapp.isNotEmpty)
+        ? whatsapp.split('/') // Split by '/' or adjust to your delimiter
+        : [];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Choose number"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (numbers.isEmpty)
+                Text(
+                  "No WhatsApp number",
+                  style: TextStyle(
+                    fontSize: 16,
+                  ),
+                )
+              else
+                // Display each number in a separate row
+                ...numbers.map((number) {
+                  return InkWell(
+                    onTap: () async {
+                      await launch("https://wa.me/${number.trim()}?text=Hello");
+                    },
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.phone_circle,
+                          size: 20,
+                          color: Colors.black,
+                        ),
+                        SizedBox(width: 8),
+                        Text(number.trim()), // Trim any extra spaces
+                      ],
+                    ),
+                  );
+                }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
+    final phoneNumbers = customer["mobileno"];
+
+    // Split the phone numbers by '/' or another delimiter if multiple numbers are present
+    List<String> numbers = (phoneNumbers != null && phoneNumbers.isNotEmpty)
+        ? phoneNumbers.split('/')
+        : [];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Choose number"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (numbers.isEmpty)
+                Text(
+                  "No phone number available",
+                  style: TextStyle(
+                    fontSize: 16,
+                  ),
+                )
+              else
+                // Display each number in a separate row
+                ...numbers.map((number) {
+                  return InkWell(
+                    onTap: () async {
+                      final Uri url = Uri.parse('tel:${number.trim()}');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      } else {
+                        throw 'Could not launch $url';
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.phone_outlined,
+                          size: 20,
+                          color: Colors.black,
+                        ),
+                        SizedBox(width: 8),
+                        Text(number.trim()), // Trim any extra spaces
+                      ],
+                    ),
+                  );
+                }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -232,7 +306,7 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                           : Responsive.isMediumScreen(context)
                               ? screenHeight * .04
                               : screenHeight * 0.05,
-                  width: screenWidth * 0.83,
+                  width: screenWidth * 0.86,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
@@ -259,10 +333,25 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.filter_alt_outlined,
-                  size: 40,
-                  color: Colors.black54,
+                InkWell(
+                  onTap: _showLocationFilterDialog,
+                  child: Container(
+                      height: isLandscape
+                          ? screenHeight * 0.08
+                          : Responsive.isSmallScreen(context)
+                              ? screenHeight * 0.04
+                              : Responsive.isMediumScreen(context)
+                                  ? screenHeight * .04
+                                  : screenHeight * 0.05,
+                      width: screenWidth * 0.1,
+                     decoration: BoxDecoration(
+                       image: DecorationImage(image: AssetImage(
+                        isFiltered ? "assets/filter.png" : "assets/filter1.png",
+                      ),
+                      colorFilter: ColorFilter.mode(isFiltered? const Color.fromARGB(255, 147, 25, 151):Colors.black, BlendMode.srcIn),
+                      )
+                     ),
+                      ),
                 )
               ],
             ),
@@ -350,19 +439,18 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                                       },
                                       child: Icon(
                                         Icons.phone_outlined,
-                                        size: 20,
+                                        size: 25,
                                         color: Colors.black,
                                       ),
                                     ),
                                     SizedBox(width: screenWidth * 0.01),
                                     InkWell(
                                       onTap: () {
-
                                         showCallDialog(context, customer);
                                       },
                                       child: Icon(
                                         CupertinoIcons.phone_circle,
-                                        size: 20,
+                                        size: 25,
                                         color: Colors.black,
                                       ),
                                     ),
@@ -399,7 +487,14 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                                                 context,
                                                 MaterialPageRoute(
                                                     builder: (context) =>
-                                                        CreditAging()));
+                                                        CreditAging(
+                                                          customerName: customer[
+                                                              "customer_name"],
+                                                          place: customer[
+                                                              "area_name"],
+                                                          id: customer[
+                                                              "customerid"],
+                                                        )));
                                             break;
                                           case 'receipt':
                                             Navigator.push(
@@ -413,8 +508,13 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                                                 context,
                                                 MaterialPageRoute(
                                                     builder: (context) =>
-                                                        StatementsLists(customerName: customer["customer_name"],
-                                                        place: customer["area_name"],
+                                                        StatementsLists(
+                                                          customerName: customer[
+                                                              "customer_name"],
+                                                          place: customer[
+                                                              "area_name"],
+                                                          id: customer[
+                                                              "customerid"],
                                                         )));
 
                                             break;
@@ -428,7 +528,7 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                                             child: Row(
                                               children: [
                                                 Icon(CupertinoIcons.placemark),
-                                                Text('Location'),
+                                                Text('Location',style: TextStyle(fontWeight: FontWeight.w400)),
                                               ],
                                             ),
                                           ),
@@ -437,7 +537,7 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                                             child: Row(
                                               children: [
                                                 Icon(Icons.receipt),
-                                                Text('Statement'),
+                                                Text('Statement',style: TextStyle(fontWeight: FontWeight.w400)),
                                               ],
                                             ),
                                           ),
@@ -446,7 +546,7 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                                             child: Row(
                                               children: [
                                                 Icon(Icons.credit_score),
-                                                Text('Credit Age Report'),
+                                                Text('Credit Age Report',style: TextStyle(fontWeight: FontWeight.w400),),
                                               ],
                                             ),
                                           ),
@@ -456,7 +556,7 @@ void showPhoneDialog(BuildContext context, Map<String, dynamic> customer) {
                                               children: [
                                                 Icon(Icons
                                                     .receipt_long_outlined),
-                                                Text('Receipt'),
+                                                Text('Receipt',style: TextStyle(fontWeight: FontWeight.w400)),
                                               ],
                                             ),
                                           ),
